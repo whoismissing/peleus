@@ -9,6 +9,11 @@ intro to ghidra scripting guide
 * [Installing](#installing)
 * [Directory Structure](#directory-structure)
 * [FlatProgramAPI](#flatprogramapi)
+* [Headless Mode](#headless-mode)
+* [Decompiler](#decompiler)
+* [Pcode Emulator](#pcode-emulator)
+* [Errata](#errata)
+* [Cool Projects](#cool-projects)
 
 ## Installing
 
@@ -38,14 +43,16 @@ Unzip the file to get the `api` folder where you can read the java docs.
 
 ## FlatProgramAPI
 
-Java docs location: `/docs/api/ghidra/program/flatapi/FlatProgramAPI.html`
+Java docs location: `docs/api/ghidra/program/flatapi/FlatProgramAPI.html`
+
+Online mirror is at: https://ghidra.re/ghidra_docs/api/index.html
 
 These functions can be run without creating any objects and is usually what to start with to get the objects you need.
 
 ### Important Objects
 
-* TaskMonitor - object used to show progress and for canceling an operation
-* ProgramDB - object used to represent the currentProgram
+* TaskMonitor - object used to show progress and for canceling an operation via the GUI
+* ProgramDB - object used to represent the currentProgram. Most other objects are obtained via some form of `currentProgram.get*()` method
 * FunctionDB - object used to represent a defined function
   * To get a list of all functions, get a FunctionIteratorDB from the listing object with: `currentProgram.getListing().getFunctions(true)`
 * Address - object used to represent a location in the program
@@ -95,13 +102,32 @@ Coming from IDA, we may wonder where are the cross references?
 
 Fear not, we use `getReferencesTo(Address)` to get a list of references to the user-specified address.
 
+## headless mode
+
+The headless analyzer script is located in `support/analyzeHeadless`. 
+
+There are a lot of flags for running it as can be seen [here](https://ghidra.re/ghidra_docs/analyzeHeadlessREADME.html)
+
+Some simple examples is to do:
+
+* `analyzeHeadless [project_directory] [project_name] -import [directory_of_binaries]` - Import a directory of binaries into a new project and analyze
+* `analyzeHeadless [project_directory] [project_name] -process [project_file]` - Process a specific file imported into an existing project.
+
+**useful flags**
+
+`-preScript [ghidra_script_name]` - Run a specific ghidra script **before** the default analyze scripts. 
+
+`-postScript [ghidra_script_name]` - Run a specific ghidra script **after** the default analyze scripts.
+
+Note: the `[ghidra_script_name]` is not the full file path, it will grab the name from a ghidra_scripts folder.
+
 ## decompiler
 
 look at ghidra.app.decompiler.flatapi for some accessible methods
 
 The decompiler is a C++ binary located in `Ghidra/Features/Decompiler/os/linux64/decompile`.
 
-The program takes input via stdin. Ghidra will shell-out decompilation to this binary.
+The program takes XML input via stdin. Ghidra will shell-out decompilation to this binary.
 
 The source code can be found at: https://github.com/NationalSecurityAgency/ghidra/tree/master/Ghidra/Features/Decompiler/src/decompile/cpp
 
@@ -116,10 +142,24 @@ my guess is to look at ghidra.pcode.emulate
 * https://github.com/TheRomanXpl0it/ghidra-emu-fun - ghidrascript frontend of pcode emulator
 * https://github.com/kc0bfv/pcode-emulator - pcode emulator
 
+## sleigh
+
+[sleigh](https://ghidra.re/courses/languages/html/sleigh.html) is ghidra's processor specification language
+
+relevant processor spec files (which are mostly XML) are located in: `Ghidra/Processors/`
+
+Some of the relevant file conventions are:
+
+* .ldefs - processor metadata
+* .cspec - calling conventions of the processor
+* .slaspec - declaration of endianness and stuff
+* .sla - compiled form for ELF relocations
+
 ## Errata
 
 * allegedly, the regex in `docs/api/search.js` can be changed to match more stuff in the web search of the java docs.
 * at the moment, there is no good way to change the graph view colors from the API. so ghetto dark mode exists by going to `Edit -> Tool Options -> Tool -> Use Inverted Colors`
+* generally, the workflow is to prototype a script in python and if it becomes a bigger thing, develop the plugin in java
 
 ## cool projects
 
